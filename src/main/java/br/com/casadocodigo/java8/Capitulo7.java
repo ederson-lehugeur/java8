@@ -1,10 +1,17 @@
 package br.com.casadocodigo.java8;
 
-import java.util.*;
-import java.io.*;
-import java.math.*;
-import java.util.stream.*;
-import java.util.function.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.OptionalDouble;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 class Capitulo7 {
 	public static void main (String... args) throws Exception {
@@ -17,6 +24,8 @@ class Capitulo7 {
 
 		usuarios.sort(Comparator.comparing(Usuario::getPontos).reversed());
 		usuarios.subList(0,1).forEach(Usuario::tornaModerador);
+
+		usuarios.forEach(u -> System.out.println(u.isModerador()));
 
 		Collections.sort(usuarios, new Comparator<Usuario>() {
 			@Override
@@ -31,10 +40,23 @@ class Capitulo7 {
 			usuario.tornaModerador();
 		}
 
-		Stream<Usuario> stream = usuarios.stream()
-			.filter(u -> u.getPontos() > 100);
-	
+		Stream<Usuario> stream = usuarios
+				.stream()
+				.filter(u -> u.getPontos() > 100);
+
 		stream.forEach(System.out::println);
+		// Os métodos da interface Stream não alteram os elementos do stream original
+		usuarios.forEach(System.out::println);
+
+		usuarios.stream().filter(u -> u.getPontos() > 140).forEach(Usuario::tornaModerador);
+		usuarios.stream().filter(Usuario::isModerador).forEach(System.out::println);
+
+		List<Usuario> maisQue110 = new ArrayList<>();
+
+		//usuarios.stream().filter(u -> u.getPontos() > 100).forEach(u -> maisQue110.add(u));
+		usuarios.stream().filter(u -> u.getPontos() > 100).forEach(maisQue110::add);
+
+		maisQue110.forEach(u -> System.out.println(u.getNome()));
 
 		Supplier<ArrayList<Usuario>> supplier = ArrayList::new;
 		BiConsumer<ArrayList<Usuario>, Usuario> accumulator = ArrayList::add;
@@ -81,7 +103,6 @@ class Capitulo7 {
 
 		List<Usuario> vazia = Collections.emptyList();
 
-
 		double media = vazia.stream()
 			.mapToInt(Usuario::getPontos)
 			.average()
@@ -103,7 +124,10 @@ class Capitulo7 {
 			.max(Comparator.comparingInt(Usuario::getPontos))
 			.map(u -> u.getNome());
 
-
+		Optional<String> maxNome2 = usuarios
+				.stream()
+				.max(Comparator.comparingInt(Usuario::getPontos))
+				.map(Usuario::getNome);
 	}
 }
 
