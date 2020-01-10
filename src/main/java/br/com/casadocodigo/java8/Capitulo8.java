@@ -1,10 +1,19 @@
 package br.com.casadocodigo.java8;
 
-import java.util.*;
-import java.io.*;
-import java.nio.file.*;
-import java.util.stream.*;
-import java.util.function.*;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Random;
+import java.util.function.IntBinaryOperator;
+import java.util.function.IntSupplier;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 class Capitulo8 {
 	public static void main (String... args) throws Exception {
@@ -23,9 +32,10 @@ class Capitulo8 {
 		// peek mostra so os processados:
 		usuarios.stream()
 			.filter(u -> u.getPontos() > 100)
-			.peek(System.out::println).findAny();
+			.peek(System.out::println)
+			.findAny();
 
-		System.out.println();
+		System.out.println("-");
 
 		// peek é apens intermeridiario:
 
@@ -33,7 +43,7 @@ class Capitulo8 {
 			.filter(u -> u.getPontos() > 100)
 			.peek(System.out::println);  // precisa chamar terminal!
 
-		System.out.println();
+		System.out.println("-");
 
 		// sort é operador intermediario, porem stateful:
 		usuarios.stream()
@@ -41,8 +51,7 @@ class Capitulo8 {
 			.peek(System.out::println)
 			.findAny();
 
-		System.out.println();
-
+		System.out.println("-");
 
 		usuarios.stream()
 			.sorted(Comparator.comparing(Usuario::getNome))
@@ -57,6 +66,8 @@ class Capitulo8 {
 			.mapToInt(Usuario::getPontos)
 			.sum();
 
+		System.out.println(total);
+
 		int valorInicial = 0;
 		IntBinaryOperator operacao = (a, b) -> a + b;
 
@@ -64,18 +75,26 @@ class Capitulo8 {
 			.mapToInt(Usuario::getPontos)
 			.reduce(valorInicial, operacao);
 
+		System.out.println(total2);
+
+		int total3 = usuarios.stream()
+				.mapToInt(Usuario::getPontos)
+				.reduce(0, Integer::sum);
+
+			System.out.println(total3);
+
 		int multiplicacao = usuarios.stream()
 			.mapToInt(Usuario::getPontos)
 			.reduce(1, (a,b) -> a * b);
 
+		System.out.println(multiplicacao);
+
 		// pulando o map!
-		int total3 = usuarios.stream()
-			.reduce(0, (atual, u) -> atual + u.getPontos(), Integer::sum);	
+		int total4 = usuarios.stream()
+			.reduce(0, (atual, u) -> atual + u.getPontos(), Integer::sum);
 
 		boolean hasModerator = usuarios.stream()
 			.anyMatch(Usuario::isModerador);
-
-
 
 		// stream infinito:
 
@@ -83,7 +102,7 @@ class Capitulo8 {
 		IntStream stream = IntStream.generate(() -> random.nextInt());
 
 		// loop infinito
-		// int valor = stream.sum();
+		//int valor = stream.sum();
 
 		List<Integer> list = IntStream
 			.generate(() -> random.nextInt())
@@ -91,10 +110,13 @@ class Capitulo8 {
 			.boxed()
 			.collect(Collectors.toList());
 
+		list.stream().limit(5).forEach(System.out::println);
+
 		class Fibonacci implements IntSupplier {
 			private int anterior = 0;
 			private int proximo = 1;
 
+			@Override
 			public int getAsInt() {
 				proximo = proximo + anterior;
 				anterior = proximo - anterior;
@@ -103,7 +125,7 @@ class Capitulo8 {
 		}
 
 		IntStream.generate(new Fibonacci())
-			.limit(10)
+			.limit(12)
 			.forEach(System.out::println);
 
 		int maiorQue100 = IntStream
@@ -116,42 +138,50 @@ class Capitulo8 {
 
 		IntStream.iterate(0, x -> x + 1)
 			.limit(10)
-			.forEach(System.out::println);		
-
-
+			.forEach(System.out::println);
 
 		// flatmap e java.nio.files
 
-		Files.list(Paths.get("./br/com/casadocodigo/java8"))
+		final String PATH = "./src/main/java/br/com/casadocodigo/java8";
+
+		Files.list(Paths.get(PATH))
 			.forEach(System.out::println);
 
-		Files.list(Paths.get("./br/com/casadocodigo/java8"))
+		System.out.println("-");
+
+		Files.list(Paths.get(PATH))
 			.filter(p -> p.toString().endsWith(".java"))
 			.forEach(System.out::println);
 
+		System.out.println("-");
 
-		Files.list(Paths.get("./br/com/casadocodigo/java8"))
+		Files.list(Paths.get(PATH))
 			.filter(p -> p.toString().endsWith(".java"))
 			.map(p -> lines(p))
 			.forEach(System.out::println);
 
-		Stream<Stream<String>> strings = 
-			Files.list(Paths.get("./br/com/casadocodigo/java8"))
+		System.out.println("-");
+
+		Stream<Stream<String>> strings =
+			Files.list(Paths.get(PATH))
 				.filter(p -> p.toString().endsWith(".java"))
 				.map(p -> lines(p));
 
-		Files.list(Paths.get("./br/com/casadocodigo/java8"))
+		Stream<String> strings2 =
+				Files.list(Paths.get(PATH))
+				.filter(p -> p.toString().endsWith(".java"))
+				.flatMap(p -> lines(p));
+
+		Files.list(Paths.get(PATH))
 			.filter(p -> p.toString().endsWith(".java"))
 			.flatMap(p -> lines(p))
 			.forEach(System.out::println);
 
-		
 		IntStream chars =
-			Files.list(Paths.get("./br/com/casadocodigo/java8"))
+			Files.list(Paths.get(PATH))
 				.filter(p -> p.toString().endsWith(".java"))
 				.flatMap(p -> lines(p))
 				.flatMapToInt((String s) -> s.chars());
-
 
 		Grupo englishSpeakers = new Grupo();
 		englishSpeakers.add(user1);
@@ -166,7 +196,6 @@ class Capitulo8 {
 			.flatMap(g -> g.getUsuarios().stream())
 			.distinct()
 			.forEach(System.out::println);
-
 	}
 
 	static Stream<String> lines(Path p) {
