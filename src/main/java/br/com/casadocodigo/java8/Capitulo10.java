@@ -8,6 +8,7 @@ import java.time.LocalTime;
 import java.time.Month;
 import java.time.MonthDay;
 import java.time.Period;
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -19,50 +20,57 @@ import java.util.Locale;
 public class Capitulo10 {
 
 	public static void main(String[] args) {
-		
+
 		// incrementando um mês com Calendar
 		Calendar mesQueVem = Calendar.getInstance();
 		mesQueVem.add(Calendar.MONTH, 1);
-		
+
 		// incrementando um mês com LocalDate
 		LocalDate mesQueVem2 = LocalDate.now().plusMonths(1);
-		
+
 		// decrementando um mês com LocalDate
 		LocalDate anoPassado = LocalDate.now().minusYears(1);
-		
+
 		// LocalDateTime
-		
-		LocalDateTime agora = LocalDateTime.now(); 
+
+		LocalDateTime agora = LocalDateTime.now();
 		System.out.println(agora);
 
 		// construindo um LocalDateTime a partir de um LocalDate
 		LocalDateTime hojeAoMeioDia = LocalDate.now().atTime(12,0);
 
 		// construindo um LocalDateTime pela junção de um LocalDate com LocalTime
-		
+
 		LocalTime agora3 = LocalTime.now();
 		LocalDate hoje = LocalDate.now();
 		LocalDateTime dataEhora = hoje.atTime(agora3);
 
+		System.out.println(dataEhora);
+
 		// adicionando informação de timezone para ter um ZonedDateTime.
-		ZonedDateTime dataComHoraETimezone = 
+		ZonedDateTime dataComHoraETimezone =
 			dataEhora.atZone(ZoneId.of("America/Sao_Paulo"));
 
+		System.out.println(dataComHoraETimezone);
+
 		// de ZonedDateTime para LocalDateTime
-		
+
 		LocalDateTime semTimeZone = dataComHoraETimezone.toLocalDateTime();
 
 		// criando a partir do factory method *of*
-		
+
 		LocalDate date = LocalDate.of(2014, 12, 25);
 		LocalDateTime dateTime = LocalDateTime.of(2014, 12, 25, 10, 30);
 
+		System.out.println(date);
+		System.out.println(dateTime);
+
 		// utilizando métodos *with* para adicionar valores
-		
+
 		LocalDate dataDoPassado = LocalDate.now().withYear(1988);
 
 		System.out.println(dataDoPassado.getYear());
-		
+
 		// comparações entre datas com os métodos *is*
 
 		LocalDate amanha = LocalDate.now().plusDays(1);
@@ -71,21 +79,31 @@ public class Capitulo10 {
 		System.out.println(hoje.isAfter(amanha));
 		System.out.println(hoje.isEqual(amanha));
 
+		ZonedDateTime tokyo = ZonedDateTime.of(2011, 5, 2, 10, 30, 0, 0, ZoneId.of("Asia/Tokyo"));
+		ZonedDateTime saoPaulo = ZonedDateTime.of(2011, 5, 2, 10, 30, 0, 0, ZoneId.of("America/Sao_Paulo"));
+
+		//tokyo = tokyo.plusHours(12);
+
+		System.out.println(tokyo.isEqual(saoPaulo));
+
 		// dia do mês atual a partir do MonthDay
-		
+
 		System.out.println("hoje é dia: "+ MonthDay.now().getDayOfMonth());
-		
+
+		YearMonth ym = YearMonth.from(LocalDate.now());
+		System.out.println(ym.getMonth() + " " + ym.getYear());
+
 		// enum Month
-		
-		System.out.println(LocalDate.of(2014, 12, 25)); 
-		System.out.println(LocalDate.of(2014, Month.DECEMBER, 25));	
-		
+
+		System.out.println(LocalDate.of(2014, 12, 25));
+		System.out.println(LocalDate.of(2014, Month.DECEMBER, 25));
+
 		System.out.println(Month.DECEMBER.firstMonthOfQuarter());
-		System.out.println(Month.DECEMBER.plus(2)); 
+		System.out.println(Month.DECEMBER.plus(2));
 		System.out.println(Month.DECEMBER.minus(1));
 
 		// formatando  e exibindo os modelos de data
-		
+
 		Locale pt = new Locale("pt");
 
 		System.out.println(Month.DECEMBER
@@ -95,30 +113,36 @@ public class Capitulo10 {
 			.getDisplayName(TextStyle.SHORT, pt));
 
 		String resultado = agora.format(DateTimeFormatter.ISO_LOCAL_TIME);
+		System.out.println(resultado);
 
-		agora.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+		String resultado2 = agora.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+		System.out.println(resultado2);
+
+		String resultado3 = agora.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss.SSS"));
+		System.out.println(resultado3);
 
 		// parseando de String para LocalDate
-		
+
 		DateTimeFormatter formatador = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-		String resultado2 = agora.format(formatador);
-		LocalDate agoraEmData = LocalDate.parse(resultado2, formatador);
+		String resultado4 = agora.format(formatador);
+		LocalDate agoraEmData = LocalDate.parse(resultado4, formatador);
+		System.out.println(agoraEmData);
 
 		// formatando com Calendar
-		
+
 		Calendar instante = Calendar.getInstance();
-		instante.set(2014, Calendar.FEBRUARY, 30);		
+		instante.set(2014, Calendar.FEBRUARY, 30);
 		SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yy");
 		System.out.println(dateFormat.format(instante.getTime()));
 
 		// data e hora inválida
-		
-		LocalDate.of(2014, Month.FEBRUARY, 30);
 
-		LocalDateTime horaInvalida = LocalDate.now().atTime(25, 0);
+		//LocalDate.of(2014, Month.FEBRUARY, 30);
+
+		//LocalDateTime horaInvalida = LocalDate.now().atTime(25, 0);
 
 		// diferença de dias com Calendar
-		
+
 		Calendar calendar = Calendar.getInstance();
 
 		Calendar outraData = Calendar.getInstance();
@@ -130,43 +154,46 @@ public class Capitulo10 {
 
 		long dias = diferenca / milissegundosDeUmDia;
 
+		System.out.println(dias);
+
 		// diferença de dias com ChronoUnit
-		
+
 		LocalDate agora4 = LocalDate.now();
 		LocalDate outraData2 = LocalDate.of(1989, Month.JANUARY, 25);
 		long dias2 = ChronoUnit.DAYS.between(outraData2, agora4);
-		
+
 		// diferença de meses e anos
-		
+
 		long meses = ChronoUnit.MONTHS.between(outraData2, agora4);
 		long anos = ChronoUnit.YEARS.between(outraData2, agora4);
-		System.out.printf("%s dias, %s meses e %s anos", dias2, meses, anos);
+		System.out.printf("%s dias, %s meses e %s anos\n", dias2, meses, anos);
 
 		// periodo entre duas datas
-		
-		LocalDate outraData3 = LocalDate.of(1989, Month.JANUARY, 25);
+
+		//LocalDate outraData3 = LocalDate.of(1989, Month.JANUARY, 25);
+		LocalDate outraData3 = LocalDate.of(2020, Month.FEBRUARY, 20);
 		Period periodo = Period.between(outraData3, agora4);
-		System.out.printf("%s dias, %s meses e %s anos", 
+		System.out.printf("%s dias, %s meses e %s anos\n",
 			periodo.getDays(), periodo.getMonths(), periodo.getYears());
 
 		// invertendo valores do periodo
-		
+
 		Period periodo2 = Period.between(outraData3, agora4);
 
 		if (periodo2.isNegative()) periodo2 = periodo2.negated();
 
-		System.out.printf("%s dias, %s meses e %s anos", 
+		System.out.printf("%s dias, %s meses e %s anos\n",
 			periodo2.getDays(), periodo2.getMonths(), periodo2.getYears());
 
 		// o mesmo, só que agora trabalhando com duração
-		
+
 		LocalDateTime agora5 = LocalDateTime.now();
 		LocalDateTime daquiAUmaHora = agora5.plusHours(1);
 		Duration duration = Duration.between(agora5, daquiAUmaHora);
 
 		if (duration.isNegative()) duration = duration.negated();
 
-		System.out.printf("%s horas, %s minutos e %s segundos", 
+		System.out.printf("%s horas, %s minutos e %s segundos\n",
 			duration.toHours(), duration.toMinutes(), duration.getSeconds());
 
 	}
