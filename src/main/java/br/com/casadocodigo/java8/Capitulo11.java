@@ -5,10 +5,11 @@ import static java.util.Arrays.asList;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.time.format.DateTimeFormatter;
 import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -19,7 +20,6 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.function.Function;
 
 class Product {
 	private String name;
@@ -44,6 +44,7 @@ class Product {
 		return this.price;
 	}
 
+	@Override
 	public String toString() {
 		return this.name;
 	}
@@ -60,6 +61,7 @@ class Customer {
 		return this.name;
 	}
 
+	@Override
 	public String toString() {
 		return this.name;
 	}
@@ -70,10 +72,10 @@ class Payment {
 	private LocalDateTime date;
 	private Customer customer;
 
-	public Payment(List<Product> products, 
+	public Payment(List<Product> products,
 					LocalDateTime date,
 					Customer customer) {
-		this.products = 
+		this.products =
 			Collections.unmodifiableList(products);
 		this.date = date;
 		this.customer = customer;
@@ -91,8 +93,15 @@ class Payment {
 		return this.customer;
 	}
 
+	public BigDecimal getTotalAmount() {
+		return this.products.stream()
+				.map(Product::getPrice)
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+	}
+
+	@Override
 	public String toString() {
-		return "[Payment: " + 
+		return "[Payment: " +
 			date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) +
 			" " + customer + " " + products + "]";
 	}
@@ -103,7 +112,7 @@ class Subscription {
 	private LocalDateTime begin;
 	private Optional<LocalDateTime> end;
 	private Customer customer;
-	
+
 	public Subscription(BigDecimal monthlyFee, LocalDateTime begin,
 			 Customer customer) {
 		this.monthlyFee = monthlyFee;
@@ -135,15 +144,14 @@ class Subscription {
 	public Customer getCustomer() {
 		return customer;
 	}
-	
+
 	public BigDecimal getTotalPaid() {
 		return getMonthlyFee()
 					.multiply(new BigDecimal(ChronoUnit.MONTHS
-						.between(getBegin(), 
+						.between(getBegin(),
 							getEnd().orElse(LocalDateTime.now()))));
 	}
 }
-
 
 public class Capitulo11 {
 
@@ -153,36 +161,36 @@ public class Capitulo11 {
 		Customer rodrigo = new Customer("Rodrigo Turini");
 		Customer guilherme = new Customer("Guilherme Silveira");
 		Customer adriano = new Customer("Adriano Almeida");
-		
-		Product bach = new Product("Bach Completo", 
+
+		Product bach = new Product("Bach Completo",
 				Paths.get("/music/bach.mp3"), new BigDecimal(100));
 		Product poderosas = new Product("Poderosas Anita",
 			 Paths.get("/music/poderosas.mp3"), new BigDecimal(90));
 		Product bandeira = new Product("Bandeira Brasil",
 				Paths.get("/images/brasil.jpg"), new BigDecimal(50));
-		Product beauty = new Product("Beleza Americana", 
+		Product beauty = new Product("Beleza Americana",
 				Paths.get("beauty.mov"), new BigDecimal(150));
-		Product vingadores = new Product("Os Vingadores", 
+		Product vingadores = new Product("Os Vingadores",
 				Paths.get("/movies/vingadores.mov"), new BigDecimal(200));
-		Product amelie = new Product("Amelie Poulain", 
+		Product amelie = new Product("Amelie Poulain",
 				Paths.get("/movies/amelie.mov"), new BigDecimal(100));
-		
+
 		LocalDateTime today = LocalDateTime.now();
 		LocalDateTime yesterday = today.minusDays(1);
 		LocalDateTime lastMonth = today.minusMonths(1);
-		
-		Payment payment1 = 
+
+		Payment payment1 =
 			new Payment(asList(bach, poderosas), today, paulo);
-		Payment payment2 = 
+		Payment payment2 =
 			new Payment(asList(bach, bandeira, amelie), yesterday, rodrigo);
-		Payment payment3 = 
+		Payment payment3 =
 			new Payment(asList(beauty, vingadores, bach), today, adriano);
-		Payment payment4 = 
+		Payment payment4 =
 			new Payment(asList(bach, poderosas, amelie), lastMonth, guilherme);
-		Payment payment5 = 
+		Payment payment5 =
 			new Payment(asList(beauty, amelie), yesterday, paulo);
 
-		List<Payment> payments = asList(payment1, payment2, 
+		List<Payment> payments = asList(payment1, payment2,
 			payment3, payment4, payment5);
 
 		// ordenar List<Payment> por data
@@ -193,17 +201,31 @@ public class Capitulo11 {
 
 		// somatoria dos valores de  payment1:
 
-		BigDecimal p1total = 
+		BigDecimal p1total =
 			payment1.getProducts().stream()
 			.map(Product::getPrice)
 			.reduce(BigDecimal.ZERO, (total, price) -> total.add(price));
+
+		BigDecimal p1total2 =
+				payment1.getProducts().stream()
+				.map(Product::getPrice)
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
 
 		payment1.getProducts().stream()
 			.map(Product::getPrice)
 			.reduce(BigDecimal::add)
 			.ifPresent(System.out::println);
 
+		payments.stream()
+			.map(Payment::getTotalAmount)
+			.forEach(System.out::println);
+
 		// somatoria de todos os payments
+
+		payments.stream()
+			.map(Payment::getTotalAmount)
+			.reduce(BigDecimal::add)
+			.ifPresent(System.out::println);
 
 		Stream<BigDecimal> pricesStream =
 			payments.stream()
@@ -211,87 +233,90 @@ public class Capitulo11 {
 				.map(Product::getPrice)
 				.reduce(BigDecimal.ZERO, BigDecimal::add));
 
-
-		BigDecimal total = 
+		BigDecimal total =
 			payments.stream()
 			.map(p -> p.getProducts().stream()
 						.map(Product::getPrice)
 						.reduce(BigDecimal.ZERO, BigDecimal::add))
-			.reduce(BigDecimal.ZERO, BigDecimal::add);	
+			.reduce(BigDecimal.ZERO, BigDecimal::add);
 
-		Stream<BigDecimal> priceOfEachProduct = 
-			payments.stream()	
-			.flatMap(p -> p.getProducts().stream().map(Product::getPrice));	
+		Stream<BigDecimal> priceOfEachProduct =
+			payments.stream()
+			.flatMap(p -> p.getProducts().stream().map(Product::getPrice));
 
-		Function<Payment, Stream<BigDecimal>> mapper = 
+		Function<Payment, Stream<BigDecimal>> mapper =
 			p -> p.getProducts().stream().map(Product::getPrice);
-		
 
-		BigDecimal totalFlat = 
+		BigDecimal totalFlat =
 			payments.stream()
 			.flatMap(p -> p.getProducts().stream().map(Product::getPrice))
-			.reduce(BigDecimal.ZERO, BigDecimal::add);			
+			.reduce(BigDecimal.ZERO, BigDecimal::add);
+
+		System.out.println(totalFlat);
 
 		// qual é o produto mais vendido?
-		
+
 		Stream<Product> products = payments.stream()
 			.flatMap(p -> p.getProducts().stream());
 
-
 		Map<Product, Long> topProducts = payments.stream()
 			.flatMap(p -> p.getProducts().stream())
-			.collect(Collectors.groupingBy(Function.identity(), 
+			.collect(Collectors.groupingBy(Function.identity(),
 						Collectors.counting()));
 
-		
 		System.out.println(topProducts);
 
-
-
-
 		topProducts.entrySet().stream()
+			.sorted(Comparator.comparing(Map.Entry::getValue, Comparator.reverseOrder()))
+			.limit(3)
 			.forEach(System.out::println);
+
+		System.out.println("-");
 
 		topProducts.entrySet().stream()
 			.max(Comparator.comparing(Map.Entry::getValue))
 			.ifPresent(System.out::println);
-		
+
+		System.out.println("-");
 
 		// quero map<Product, BigDecimal>
-		
+
 		Map<Product, BigDecimal> totalValuePerProduct = payments.stream()
 			.flatMap(p -> p.getProducts().stream())
-			.collect(Collectors.groupingBy(Function.identity(), 
+			.collect(Collectors.groupingBy(Function.identity(),
 					 Collectors.reducing(BigDecimal.ZERO, Product::getPrice, BigDecimal::add)));
 
+		System.out.println(totalValuePerProduct);
+
 		totalValuePerProduct.entrySet().stream()
-			.sorted(Comparator.comparing(Map.Entry::getValue))
+			.sorted(Comparator.comparing(Map.Entry::getValue, Comparator.reverseOrder()))
 			.forEach(System.out::println);
 
+		System.out.println("-");
 
 		Map<Product, BigDecimal> totalValuePerProduct2 = payments.stream()
 			.flatMap(p -> p.getProducts().stream())
-			.collect(Collectors.toMap(Function.identity(), 
+			.collect(Collectors.toMap(Function.identity(),
 						Product::getPrice,
 						BigDecimal::add));
-		
+
 		totalValuePerProduct2.entrySet().stream()
 			.sorted(Comparator.comparing(Map.Entry::getValue))
 			.forEach(System.out::println);
 
 		// usuário para lista de payment
-		Map<Customer, List<Payment>> customerToPayments = 
+
+		Map<Customer, List<Payment>> customerToPayments =
 			payments.stream()
 			.collect(Collectors.groupingBy(Payment::getCustomer));
 
-		Map<Customer, List<List<Product>>> customerToProductsList = payments.stream() 
-			.collect(Collectors.groupingBy(Payment::getCustomer, 
+		Map<Customer, List<List<Product>>> customerToProductsList = payments.stream()
+			.collect(Collectors.groupingBy(Payment::getCustomer,
 				Collectors.mapping(Payment::getProducts, Collectors.toList())));
 
 		customerToProductsList.entrySet().stream()
 			.sorted(Comparator.comparing(e -> e.getKey().getName()))
 			.forEach(System.out::println);
-
 
 		System.out.println();
 
@@ -309,8 +334,8 @@ public class Capitulo11 {
 
 		System.out.println();
 
-		Map<Customer, List<Product>> customerToProducts1step = payments.stream() 
-			.collect(Collectors.groupingBy(Payment::getCustomer, 
+		Map<Customer, List<Product>> customerToProducts1step = payments.stream()
+			.collect(Collectors.groupingBy(Payment::getCustomer,
 				Collectors.mapping(Payment::getProducts, Collectors.toList())))
 				.entrySet().stream()
 					.collect(Collectors.toMap(Map.Entry::getKey,
@@ -319,8 +344,8 @@ public class Capitulo11 {
 							.collect(Collectors.toList())));
 
 		// usando reducao
-		Map<Customer, List<Product>> customerToProducts = payments.stream() 
-			.collect(Collectors.groupingBy(Payment::getCustomer, 
+		Map<Customer, List<Product>> customerToProducts = payments.stream()
+			.collect(Collectors.groupingBy(Payment::getCustomer,
 				Collectors.reducing(Collections.emptyList(),
 					Payment::getProducts,
 						(l1, l2) -> { List<Product> l = new ArrayList<>();
@@ -332,71 +357,90 @@ public class Capitulo11 {
 			.sorted(Comparator.comparing(e -> e.getKey().getName()))
 			.forEach(System.out::println);
 
+		System.out.println("-");
 
 		// qual é o usuario que mais pagou
-		
+
 		Map<Customer, BigDecimal> totalValuePerCustomer = payments.stream()
-			.collect(Collectors.groupingBy(Payment::getCustomer, 
-					 Collectors.reducing(BigDecimal.ZERO, 
+			.collect(Collectors.groupingBy(Payment::getCustomer,
+					 Collectors.reducing(BigDecimal.ZERO,
 					 	p -> p.getProducts().stream().map(Product::getPrice).reduce(BigDecimal.ZERO, BigDecimal::add),
 					 		 BigDecimal::add)));
-		
+
 		totalValuePerCustomer.entrySet().stream()
 			.sorted(Comparator.comparing(Map.Entry::getValue))
 			.forEach(System.out::println);
 
-		Function<Payment, BigDecimal> paymentToTotal = 
+		Function<Payment, BigDecimal> paymentToTotal =
 			p -> p.getProducts().stream()
 				.map(Product::getPrice)
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
 
 		Map<Customer, BigDecimal> totalValuePerCustomer2 = payments.stream()
-			.collect(Collectors.groupingBy(Payment::getCustomer, 
-					 Collectors.reducing(BigDecimal.ZERO, 
+			.collect(Collectors.groupingBy(Payment::getCustomer,
+					 Collectors.reducing(BigDecimal.ZERO,
 					 	paymentToTotal,
 					 		 BigDecimal::add)));
 
-		
+		System.out.println("-");
+
+		Map<Customer, BigDecimal> totalValuePerCustomer3 = payments.stream()
+				.collect(Collectors.groupingBy(Payment::getCustomer,
+						 Collectors.reducing(BigDecimal.ZERO,
+						 	Payment::getTotalAmount,
+						 		 BigDecimal::add)));
+
+		totalValuePerCustomer3.entrySet().stream()
+			.sorted(Comparator.comparing(Map.Entry::getValue, Comparator.reverseOrder()))
+			.forEach(System.out::println);
 
 		// quero map<YearMonth, List<Payment>> agrupar por mes as vendas
+
 		Map<YearMonth, List<Payment>> paymentsPerMonth = payments.stream()
 			.collect(Collectors.groupingBy(p -> YearMonth.from(p.getDate())));
 
 		paymentsPerMonth.entrySet().stream()
 			.forEach(System.out::println);
 
+		System.out.println("-");
+
+		Map<LocalDate, List<Payment>> paymentsPerDate = payments.stream()
+				.collect(Collectors.groupingBy(p -> LocalDate.from(p.getDate())));
+
+		paymentsPerDate.entrySet().stream()
+			.forEach(System.out::println);
+
+		System.out.println("-");
+
 		// quero map<YearMonth, BigDecimal> total recebido por mes
+
 		Map<YearMonth, BigDecimal> paymentsValuePerMonth = payments.stream()
 			.collect(Collectors.groupingBy(p -> YearMonth.from(p.getDate()),
-				Collectors.reducing(BigDecimal.ZERO, 
+				Collectors.reducing(BigDecimal.ZERO,
 					p -> p.getProducts().stream()
 						.map(Product::getPrice)
 						.reduce(BigDecimal.ZERO,
 							BigDecimal::add),
 					BigDecimal::add)));
 
-
 		paymentsValuePerMonth.entrySet().stream()
 			.forEach(System.out::println);
-		
-
-
 
 		// subscriptions
 
 		BigDecimal monthlyFee = new BigDecimal("99.90");
-		
-		Subscription s1 = new Subscription(monthlyFee, 
+
+		Subscription s1 = new Subscription(monthlyFee,
 				yesterday.minusMonths(5), paulo);
-		
-		Subscription s2 = new Subscription(monthlyFee, 
+
+		Subscription s2 = new Subscription(monthlyFee,
 				yesterday.minusMonths(8), today.minusMonths(1), rodrigo);
-		
-		Subscription s3 = new Subscription(monthlyFee, 
+
+		Subscription s3 = new Subscription(monthlyFee,
 				yesterday.minusMonths(5), today.minusMonths(2), adriano);
-		
+
 		List<Subscription> subscriptions = Arrays.asList(s1, s2, s3);
-		
+
 		// numero de meses pago
 		System.out.println(ChronoUnit.MONTHS.between(
 			s1.getBegin(), LocalDateTime.now()));
@@ -409,9 +453,8 @@ public class Capitulo11 {
 					.multiply(new BigDecimal(ChronoUnit.MONTHS.between(
 			s1.getBegin(), s1.getEnd().orElse(LocalDateTime.now())))));
 
-
 		// dada uma colecao de subscription, calcular quanto todos pagaram ate hoje
-		
+
 		BigDecimal totalPaid = subscriptions.stream()
 			.map(Subscription::getTotalPaid)
 			.reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -419,9 +462,18 @@ public class Capitulo11 {
 
 		// EXERCICIOS
 
-		// achar o usuario que mais pagou total de valor de subscriptions ate hoje	
-		
+		// achar o usuario que mais pagou total de valor de subscriptions ate hoje
+		subscriptions.stream()
+			.filter(s -> s.getEnd().isEmpty())
+			.max(Comparator.comparing(Subscription::getTotalPaid))
+			.map(s -> s.getCustomer())
+			.ifPresent(System.out::println);
+
 		// achar o usuario que ficou mais meses pagando (independente dela estar ativa ou nao)
+		subscriptions.stream()
+			.max(Comparator.comparing(Subscription::getTotalPaid))
+			.map(s -> s.getCustomer())
+			.ifPresent(System.out::println);
 
 		// quero map<Customer, Type>, qual é o tipo de produto que ele mais comprou
 
@@ -434,7 +486,7 @@ public class Capitulo11 {
 // para exercicios
 
 enum Type {
-	MUSIC, 
-	VIDEO, 
+	MUSIC,
+	VIDEO,
 	IMAGE;
 }
